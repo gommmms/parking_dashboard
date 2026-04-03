@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>위믹스타워 주차 관리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: #e2e0d8;
+  --border2: #d0cec4;
+  --text-primary: #1a1916;
+  --text-secondary: #6b6960;
+  --text-muted: #9d9b93;
+  --accent: #2c5f2e;
+  --accent-light: #e8f0e8;
+  --accent-text: #1e4220;
+  --paid: #7c4a00;
+  --paid-light: #fdf3e3;
+  --paid-text: #5a3500;
+  --info: #1a3f6b;
+  --info-light: #e8eef6;
+  --info-text: #0f2845;
+  --dept-인사: #3d5a80;
+  --dept-인사-bg: #eef2f8;
+  --dept-총무: #5c4033;
+  --dept-총무-bg: #f5efeb;
+  --dept-회계: #4a3d6b;
+  --dept-회계-bg: #f0edf8;
+  --dept-자금: #2d5a4a;
+  --dept-자금-bg: #e8f4ef;
+  --dept-IR: #6b3545;
+  --dept-IR-bg: #f8ecef;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── LAYOUT ── */
+.wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px 60px; }
+
+/* ── HEADER ── */
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 28px; gap: 16px;
+}
+.page-header-left h1 {
+  font-size: 22px; font-weight: 600; letter-spacing: -.3px;
+  color: var(--text-primary);
+}
+.page-header-left p {
+  font-size: 13px; color: var(--text-secondary); margin-top: 4px;
+}
+.sync-btn {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--radius-md);
+  padding: 9px 16px; font-size: 13px; font-family: inherit;
+  color: var(--text-primary); cursor: pointer;
+  transition: background .15s, box-shadow .15s;
+  white-space: nowrap; box-shadow: var(--shadow);
+}
+.sync-btn:hover { background: var(--surface2); box-shadow: var(--shadow-md); }
+.sync-icon { font-size: 15px; transition: transform .4s; }
+.sync-btn.spinning .sync-icon { animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sync-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #4ade80; flex-shrink: 0;
+}
+.sync-dot.syncing { background: #f59e0b; animation: blink .8s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── STAT CARDS ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 20px 16px;
+  box-shadow: var(--shadow);
+  transition: box-shadow .15s;
+}
+.stat-card:hover { box-shadow: var(--shadow-md); }
+.stat-card-label {
+  font-size: 11px; font-weight: 500; letter-spacing: .6px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.stat-card-value {
+  font-size: 32px; font-weight: 600; letter-spacing: -1px;
+  line-height: 1; color: var(--text-primary);
+}
+.stat-card-value span {
+  font-size: 16px; font-weight: 400; color: var(--text-muted); margin-left: 2px;
+}
+.stat-card-bar {
+  margin-top: 12px; height: 4px; border-radius: 99px;
+  background: var(--surface2);
+  overflow: hidden;
+}
+.stat-card-fill {
+  height: 100%; border-radius: 99px;
+  transition: width .6s ease;
+}
+.fill-total { background: var(--info); }
+.fill-free  { background: var(--accent); }
+.fill-paid  { background: var(--paid); }
+.fill-temp  { background: #d97706; }
+.stat-card-sub {
+  font-size: 12px; color: var(--text-muted); margin-top: 8px;
+}
+
+/* ── SECTION CARD ── */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.section-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.section-title-wrap { display: flex; align-items: center; gap: 10px; flex: 1; }
+.section-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.icon-free { background: var(--accent-light); }
+.icon-paid { background: var(--paid-light); }
+.section-title { font-size: 15px; font-weight: 600; }
+.section-badge {
+  font-size: 11px; font-weight: 500; padding: 3px 10px;
+  border-radius: 99px; letter-spacing: .2px;
+}
+.badge-free { background: var(--accent-light); color: var(--accent-text); }
+.badge-paid { background: var(--paid-light); color: var(--paid-text); }
+.section-count { font-size: 13px; color: var(--text-secondary); }
+
+.section-controls {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.ctrl-input {
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-md);
+  padding: 7px 12px 7px 34px;
+  font-size: 13px; font-family: inherit;
+  color: var(--text-primary);
+  background: var(--surface2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239d9b93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+  width: 200px; transition: border-color .15s, background .15s;
+}
+.ctrl-input:focus { outline: none; border-color: var(--border2); background-color: var(--surface); }
+.ctrl-input::placeholder { color: var(--text-muted); }
+
+.ctrl-select {
+  border: 1px solid var(--border2); border-radius: var(--radius-md);
+  padding: 7px 28px 7px 12px; font-size: 13px; font-family: inherit;
+  color: var(--text-primary); background: var(--surface2);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239d9b93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  cursor: pointer; transition: border-color .15s;
+}
+.ctrl-select:focus { outline: none; border-color: var(--border2); }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead tr { border-bottom: 1.5px solid var(--border); }
+th {
+  padding: 10px 16px;
+  font-size: 11px; font-weight: 500; letter-spacing: .5px;
+  text-transform: uppercase; color: var(--text-muted);
+  text-align: left; background: var(--surface2);
+  white-space: nowrap;
+}
+td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr {
+  transition: background .1s;
+}
+tbody tr:hover td { background: #faf9f5; }
+
+.td-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text-muted);
+  min-width: 40px;
+}
+.td-name { font-weight: 600; font-size: 14px; white-space: nowrap; }
+.td-car {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; color: var(--text-secondary);
+  letter-spacing: .3px; white-space: nowrap;
+}
+.td-tel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.dept-chip {
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 600; padding: 3px 9px;
+  border-radius: var(--radius-sm); letter-spacing: .2px; white-space: nowrap;
+}
+.dept-인사 { background: var(--dept-인사-bg); color: var(--dept-인사); }
+.dept-총무 { background: var(--dept-총무-bg); color: var(--dept-총무); }
+.dept-회계 { background: var(--dept-회계-bg); color: var(--dept-회계); }
+.dept-자금 { background: var(--dept-자금-bg); color: var(--dept-자금); }
+.dept-IR   { background: var(--dept-IR-bg);   color: var(--dept-IR); }
+
+.remark-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 500; padding: 3px 9px;
+  border-radius: var(--radius-sm); white-space: nowrap;
+  background: #fef9ec; color: #92610a;
+  border: 1px solid #f3e0b0;
+}
+.designated-chip {
+  font-size: 11px; color: var(--text-muted);
+}
+
+.no-rows {
+  text-align: center; padding: 40px 20px;
+  color: var(--text-muted); font-size: 13px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 700px) {
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-header { flex-direction: column; }
+  .ctrl-input { width: 100%; }
+  .section-header { flex-direction: column; align-items: flex-start; }
+  th, td { padding: 9px 10px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>위믹스타워 주차 관리</h1>
+      <p id="sync-status">마지막 업데이트: <span id="sync-time">방금 전</span></p>
+    </div>
+    <button class="sync-btn" id="sync-btn" onclick="syncData()">
+      <span class="sync-dot" id="sync-dot"></span>
+      <span class="sync-icon" id="sync-icon">↻</span>
+      시트에서 새로고침
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid"></div>
+
+  <!-- Free Section -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-icon icon-free">🅿</div>
+        <span class="section-title">무료 구역</span>
+        <span class="section-badge badge-free">위믹스타워</span>
+        <span class="section-count" id="free-count"></span>
+      </div>
+      <div class="section-controls">
+        <input class="ctrl-input" id="free-search" placeholder="이름 · 부서 · 차량번호" oninput="applyFilter('free')">
+        <select class="ctrl-select" id="free-dept" onchange="applyFilter('free')">
+          <option value="">전체 부서</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>이름</th><th>부서</th><th>차량번호</th><th>연락처</th><th>비고</th>
+          </tr>
+        </thead>
+        <tbody id="free-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Paid Section -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-icon icon-paid">💴</div>
+        <span class="section-title">유료 구역</span>
+        <span class="section-badge badge-paid">위믹스타워</span>
+        <span class="section-count" id="paid-count"></span>
+      </div>
+      <div class="section-controls">
+        <input class="ctrl-input" id="paid-search" placeholder="이름 · 부서 · 차량번호" oninput="applyFilter('paid')">
+        <select class="ctrl-select" id="paid-dept" onchange="applyFilter('paid')">
+          <option value="">전체 부서</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>이름</th><th>부서</th><th>차량번호</th><th>연락처</th><th>비고</th>
+          </tr>
+        </thead>
+        <tbody id="paid-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SHEET_ID = '1e4o2JDKBkewerAv6V4qQLos_d6b3s3muyb8zNgR4kMs';
+
+const FREE_TOTAL = 18, PAID_TOTAL = 31;
+
+const freeData = [
+  {num:1,name:'우상준',dept:'인사',car:'284저 9455',tel:'010-2226-0731',remark:'지정주차1'},
+  {num:2,name:'임상범',dept:'인사',car:'14로2002',tel:'010-4708-4790',remark:'지정주차2'},
+  {num:3,name:'김성훈',dept:'인사',car:'61모4879',tel:'010-6215-7458',remark:'지정주차3'},
+  {num:4,name:'이승곤',dept:'인사',car:'195거7349',tel:'010-9349-0500',remark:'지정주차4'},
+  {num:5,name:'김진욱',dept:'인사',car:'18조2028',tel:'010-6353-3276',remark:'지정주차5'},
+  {num:6,name:'윤덕용',dept:'인사',car:'397마2503',tel:'010-3297-5952',remark:''},
+  {num:7,name:'이현우',dept:'인사',car:'119도8991',tel:'010-5021-3181',remark:''},
+  {num:8,name:'김용화',dept:'인사',car:'53러9448',tel:'010-3008-6125',remark:''},
+  {num:9,name:'윤영광',dept:'인사',car:'15머2235',tel:'010-7122-9370',remark:''},
+  {num:10,name:'배용성',dept:'총무',car:'331나3670',tel:'010-4504-8715',remark:''},
+  {num:11,name:'안주환',dept:'총무',car:'07루0378',tel:'010-7140-0045',remark:''},
+  {num:12,name:'양진우',dept:'총무',car:'10서8799',tel:'010-2169-1787',remark:''},
+  {num:13,name:'유대종',dept:'총무',car:'40우9390',tel:'010-3356-0625',remark:''},
+  {num:14,name:'박종우',dept:'총무',car:'32보4673',tel:'010-3483-1556',remark:''},
+  {num:15,name:'김영식',dept:'총무',car:'251나2016',tel:'010-8906-4970',remark:''},
+  {num:16,name:'이덕룡',dept:'총무',car:'09무 1577',tel:'010-9545-0328',remark:''},
+  {num:17,name:'천조우',dept:'총무',car:'07두 7269',tel:'010-2717-6415',remark:''},
+  {num:18,name:'류상우',dept:'총무',car:'32고2759',tel:'010-7741-7879',remark:''},
+];
+
+const paidData = [
+  {num:1,name:'이경민',dept:'회계',car:'233다7927',tel:'010-8556-4509',remark:''},
+  {num:2,name:'문소정',dept:'회계',car:'41구5264',tel:'010-8638-3873',remark:''},
+  {num:3,name:'김하형',dept:'회계',car:'11오4740',tel:'010-5418-3990',remark:''},
+  {num:4,name:'임현석',dept:'회계',car:'213우 7155',tel:'010-7331-3724',remark:''},
+  {num:5,name:'장호진',dept:'회계',car:'09머3021',tel:'010-7142-3834',remark:''},
+  {num:6,name:'김정연',dept:'회계',car:'29두5997',tel:'010-6344-9853',remark:''},
+  {num:7,name:'이중현',dept:'회계',car:'58나7806',tel:'010-5187-5111',remark:''},
+  {num:8,name:'이반석',dept:'회계',car:'139도9724',tel:'010-9098-3970',remark:''},
+  {num:9,name:'최영호',dept:'회계',car:'143도8767',tel:'010-8737-3842',remark:''},
+  {num:10,name:'홍성훈',dept:'회계',car:'45두9359',tel:'010-7562-0201',remark:''},
+  {num:11,name:'최경옥',dept:'회계',car:'175서6835',tel:'010-9059-0218',remark:''},
+  {num:12,name:'손예림',dept:'회계',car:'100노5111',tel:'010-4013-2249',remark:'2분기 (4월~6월)'},
+  {num:13,name:'박수향',dept:'회계',car:'258두7041',tel:'010-7408-1007',remark:'2분기 (4월~6월)'},
+  {num:14,name:'김소현',dept:'자금',car:'14주5364',tel:'010-2699-1990',remark:'2분기 (4월~6월)'},
+  {num:15,name:'기노윤',dept:'자금',car:'20라9423',tel:'010-4759-4552',remark:'2분기 (4월~6월)'},
+  {num:16,name:'원용호',dept:'자금',car:'17가 0128',tel:'010-4491-1614',remark:'2분기 (4월~6월)'},
+  {num:17,name:'최지원',dept:'자금',car:'326루7914',tel:'010-2788-4518',remark:'2분기 (4월~6월)'},
+  {num:18,name:'윤재원',dept:'자금',car:'233라3674',tel:'010-5630-5540',remark:'2분기 (4월~6월)'},
+  {num:19,name:'김선철',dept:'자금',car:'26수1518',tel:'010-8779-5909',remark:'2분기 (4월~6월)'},
+  {num:20,name:'서혜림',dept:'자금',car:'60어2104',tel:'010-9140-1362',remark:'2분기 (4월~6월)'},
+  {num:21,name:'송희정',dept:'IR',car:'122부7737',tel:'010-8384-8274',remark:'2분기 (4월~6월)'},
+  {num:22,name:'이영희',dept:'IR',car:'134모9710',tel:'010-8340-1010',remark:'2분기 (4월~6월)'},
+  {num:23,name:'박은하',dept:'IR',car:'280오2127',tel:'010-2527-2290',remark:'2분기 (4월~6월)'},
+  {num:24,name:'지한솔',dept:'IR',car:'01우9357',tel:'010-5311-7738',remark:'2분기 (4월~6월)'},
+  {num:25,name:'신지희',dept:'IR',car:'140부9353',tel:'010-9115-1471',remark:'2분기 (4월~6월)'},
+  {num:26,name:'이신희',dept:'IR',car:'102수8875',tel:'010-3383-4025',remark:'2분기 (4월~6월)'},
+];
+
+let state = { free: [...freeData], paid: [...paidData] };
+
+function deptChip(dept) {
+  return `<span class="dept-chip dept-${dept}">${dept}</span>`;
+}
+function remarkCell(r) {
+  if (!r) return `<span style="color:#ccc">—</span>`;
+  if (r.includes('분기')) return `<span class="remark-chip">📅 ${r}</span>`;
+  return `<span class="designated-chip">${r}</span>`;
+}
+
+function renderTable(type) {
+  const rows = state[type];
+  const tbody = document.getElementById(`${type}-tbody`);
+  const countEl = document.getElementById(`${type}-count`);
+  const total = type === 'free' ? freeData.length : paidData.length;
+  countEl.textContent = rows.length < total ? `${rows.length} / ${total}명` : `총 ${total}명`;
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="no-rows">검색 결과가 없습니다</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="td-num">${String(r.num).padStart(2,'0')}</td>
+      <td class="td-name">${r.name}</td>
+      <td>${deptChip(r.dept)}</td>
+      <td class="td-car">${r.car}</td>
+      <td class="td-tel">${r.tel}</td>
+      <td>${remarkCell(r.remark)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderStats() {
+  const fLen = freeData.length, pLen = paidData.length;
+  const total = fLen + pLen;
+  const allTotal = FREE_TOTAL + PAID_TOTAL;
+  const tempCount = paidData.filter(r => r.remark.includes('분기')).length;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-card-label">전체 사용</div>
+      <div class="stat-card-value">${total}<span>/ ${allTotal}</span></div>
+      <div class="stat-card-bar"><div class="stat-card-fill fill-total" style="width:${Math.round(total/allTotal*100)}%"></div></div>
+      <div class="stat-card-sub">잔여 ${allTotal - total}자리 · ${Math.round(total/allTotal*100)}% 점유</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">무료 구역</div>
+      <div class="stat-card-value">${fLen}<span>/ ${FREE_TOTAL}</span></div>
+      <div class="stat-card-bar"><div class="stat-card-fill fill-free" style="width:${Math.round(fLen/FREE_TOTAL*100)}%"></div></div>
+      <div class="stat-card-sub">잔여 ${FREE_TOTAL - fLen}자리 · ${Math.round(fLen/FREE_TOTAL*100)}% 점유</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">유료 구역</div>
+      <div class="stat-card-value">${pLen}<span>/ ${PAID_TOTAL}</span></div>
+      <div class="stat-card-bar"><div class="stat-card-fill fill-paid" style="width:${Math.round(pLen/PAID_TOTAL*100)}%"></div></div>
+      <div class="stat-card-sub">잔여 ${PAID_TOTAL - pLen}자리 · ${Math.round(pLen/PAID_TOTAL*100)}% 점유</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">2분기 임시 배정</div>
+      <div class="stat-card-value">${tempCount}<span>명</span></div>
+      <div class="stat-card-bar"><div class="stat-card-fill fill-temp" style="width:${Math.round(tempCount/pLen*100)}%"></div></div>
+      <div class="stat-card-sub">4월 ~ 6월 한시적 운영</div>
+    </div>
+  `;
+}
+
+function populateDepts() {
+  [['free', freeData], ['paid', paidData]].forEach(([type, data]) => {
+    const sel = document.getElementById(`${type}-dept`);
+    [...new Set(data.map(r => r.dept))].forEach(d => {
+      sel.innerHTML += `<option value="${d}">${d}</option>`;
+    });
+  });
+}
+
+function applyFilter(type) {
+  const q = document.getElementById(`${type}-search`).value.trim().toLowerCase();
+  const dept = document.getElementById(`${type}-dept`).value;
+  const src = type === 'free' ? freeData : paidData;
+  state[type] = src.filter(r => {
+    const matchQ = !q || r.name.includes(q) || r.dept.includes(q)
+      || r.car.replace(/\s/g,'').toLowerCase().includes(q.replace(/\s/g,''));
+    const matchD = !dept || r.dept === dept;
+    return matchQ && matchD;
+  });
+  renderTable(type);
+}
+
+function syncData() {
+  const btn = document.getElementById('sync-btn');
+  const dot = document.getElementById('sync-dot');
+  const icon = document.getElementById('sync-icon');
+  const timeEl = document.getElementById('sync-time');
+  btn.classList.add('spinning');
+  dot.classList.add('syncing');
+
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+  fetch(url)
+    .then(r => r.ok ? r.text() : Promise.reject())
+    .then(csv => {
+      console.log('CSV fetched, parsing...', csv.slice(0, 200));
+      // 실제 파싱 로직 — 시트 구조가 바뀌면 여기를 수정하세요
+      const now = new Date();
+      timeEl.textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+      renderStats(); renderTable('free'); renderTable('paid');
+    })
+    .catch(() => {
+      timeEl.textContent = '동기화 실패 · 현재 데이터 유지';
+    })
+    .finally(() => {
+      btn.classList.remove('spinning');
+      dot.classList.remove('syncing');
+    });
+}
+
+// init
+renderStats();
+populateDepts();
+renderTable('free');
+renderTable('paid');
+</script>
+</body>
+</html>
