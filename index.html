@@ -25,8 +25,6 @@
   --info: #1a3f6b;
   --info-light: #e8eef6;
   --info-text: #0f2845;
-  --dept-경영관리: #d4a017;
-  --dept-경영관리-bg: #fff8e1;
   --dept-인사: #3d5a80;
   --dept-인사-bg: #eef2f8;
   --dept-총무: #5c4033;
@@ -236,7 +234,6 @@ tbody tr:hover td { background: #faf9f5; }
   font-size: 11px; font-weight: 600; padding: 3px 9px;
   border-radius: var(--radius-sm); letter-spacing: .2px; white-space: nowrap;
 }
-.dept-경영관리 { background: var(--dept-경영관리-bg); color: var(--dept-경영관리); }
 .dept-인사 { background: var(--dept-인사-bg); color: var(--dept-인사); }
 .dept-총무 { background: var(--dept-총무-bg); color: var(--dept-총무); }
 .dept-회계 { background: var(--dept-회계-bg); color: var(--dept-회계); }
@@ -352,11 +349,11 @@ const SHEET_ID = '1e4o2JDKBkewerAv6V4qQLos_d6b3s3muyb8zNgR4kMs';
 const FREE_TOTAL = 18, PAID_TOTAL = 31;
 
 const freeData = [
-  {num:1,name:'우상준',dept:'경영관리',car:'284저 9455',tel:'010-2226-0731',remark:'지정주차1'},
-  {num:2,name:'임상범',dept:'경영관리',car:'14로2002',tel:'010-4708-4790',remark:'지정주차2'},
-  {num:3,name:'김성훈',dept:'경영관리',car:'61모4879',tel:'010-6215-7458',remark:'지정주차3'},
-  {num:4,name:'이승곤',dept:'경영관리',car:'195거7349',tel:'010-9349-0500',remark:'지정주차4'},
-  {num:5,name:'김진욱',dept:'경영관리',car:'18조2028',tel:'010-6353-3276',remark:'지정주차5'},
+  {num:1,name:'우상준',dept:'인사',car:'284저 9455',tel:'010-2226-0731',remark:'지정주차1'},
+  {num:2,name:'임상범',dept:'인사',car:'14로2002',tel:'010-4708-4790',remark:'지정주차2'},
+  {num:3,name:'김성훈',dept:'인사',car:'61모4879',tel:'010-6215-7458',remark:'지정주차3'},
+  {num:4,name:'이승곤',dept:'인사',car:'195거7349',tel:'010-9349-0500',remark:'지정주차4'},
+  {num:5,name:'김진욱',dept:'인사',car:'18조2028',tel:'010-6353-3276',remark:'지정주차5'},
   {num:6,name:'윤덕용',dept:'인사',car:'397마2503',tel:'010-3297-5952',remark:''},
   {num:7,name:'이현우',dept:'인사',car:'119도8991',tel:'010-5021-3181',remark:''},
   {num:8,name:'김용화',dept:'인사',car:'53러9448',tel:'010-3008-6125',remark:''},
@@ -516,34 +513,7 @@ function syncData() {
       dot.classList.remove('syncing');
     });
 }
-<script>
-fetch("https://opensheet.elk.sh/1e4o2JDKBkewerAv6V4qQLos_d6b3s3muyb8zNgR4kMs/Sheet1")
-  .then(res => res.json())
-  .then(data => {
-    let html = "<table border='1'>";
-    
-    // 헤더
-    html += "<tr>";
-    Object.keys(data[0]).forEach(key => {
-      html += `<th>${key}</th>`;
-    });
-    html += "</tr>";
 
-    // 데이터
-    data.forEach(row => {
-      html += "<tr>";
-      Object.values(row).forEach(value => {
-        html += `<td>${value}</td>`;
-      });
-      html += "</tr>";
-    });
-
-    html += "</table>";
-
-    document.getElementById("sheet").innerHTML = html;
-  });
-</script>
-<div id="sheet"></div>
 // init
 renderStats();
 populateDepts();
