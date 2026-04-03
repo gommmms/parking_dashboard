@@ -516,15 +516,6 @@ function syncData() {
       dot.classList.remove('syncing');
     });
 }
-
-// init
-renderStats();
-populateDepts();
-renderTable('free');
-renderTable('paid');
-</script>
-</body>
-</html>
 <script>
 fetch("https://opensheet.elk.sh/1e4o2JDKBkewerAv6V4qQLos_d6b3s3muyb8zNgR4kMs/Sheet1")
   .then(res => res.json())
@@ -552,5 +543,12 @@ fetch("https://opensheet.elk.sh/1e4o2JDKBkewerAv6V4qQLos_d6b3s3muyb8zNgR4kMs/She
     document.getElementById("sheet").innerHTML = html;
   });
 </script>
-
 <div id="sheet"></div>
+// init
+renderStats();
+populateDepts();
+renderTable('free');
+renderTable('paid');
+</script>
+</body>
+</html>
